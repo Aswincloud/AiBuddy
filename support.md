@@ -84,7 +84,7 @@ A: Yes, if your admin allows third-party apps in private channels.
 For help, bugs, or feature requests:
 
 - 📧 **Email:** aswin@aswincloud.com
-- 🐛 **Issues:** https://github.com/Aswintechie/AiBuddy/issues
+- 🐛 **Issues:** https://github.com/Aswincloud/AiBuddy/issues
 
 ## Reporting Security Issues
 
