@@ -6,7 +6,7 @@ Welcome to the AiBuddy documentation site.
 
 - 📖 [Privacy Policy](privacy.html)
 - 🛟 [Support & FAQ](support.html)
-- 💻 [GitHub Repository](https://github.com/Aswintechie/AiBuddy)
+- 💻 [GitHub Repository](https://github.com/Aswincloud/AiBuddy)
 
 ## About AiBuddy
 
