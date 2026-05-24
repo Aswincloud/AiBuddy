@@ -45,7 +45,7 @@ AiBuddy brings fast, contextual AI conversations directly into Teams — persona
 
 ```bash
 # 1. Clone and enter the project directory
-git clone https://github.com/Aswintechie/AiBuddy.git
+git clone https://github.com/Aswincloud/AiBuddy.git
 cd AiBuddy/aibuddy
 
 # 2. Create and activate a virtual environment
