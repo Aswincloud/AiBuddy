@@ -37,4 +37,4 @@ We may update this policy. Changes will be posted at this URL.
 
 ## Contact
 For questions about AiBuddy: aswin@aswincloud.com
-GitHub: https://github.com/Aswintechie/AiBuddy
+GitHub: https://github.com/Aswincloud/AiBuddy
