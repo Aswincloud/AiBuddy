@@ -227,6 +227,6 @@ class AiBuddyBot(ActivityHandler):
             "**Links:**\n"
             "• 🔒 [Privacy Policy](https://aswintechie.github.io/AiBuddy/privacy)\n"
             "• 🛟 [Support](https://aswintechie.github.io/AiBuddy/support)\n"
-            "• 💻 [Source Code](https://github.com/Aswintechie/AiBuddy)\n"
+            "• 💻 [Source Code](https://github.com/Aswincloud/AiBuddy)\n"
         )
         await turn_context.send_activity(MessageFactory.text(about_text))
