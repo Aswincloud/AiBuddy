@@ -12,7 +12,7 @@ Architecture decisions:
 """
 
 import logging
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from botbuilder.core import ActivityHandler, TurnContext, MessageFactory
 from botbuilder.schema import ChannelAccount
@@ -40,7 +40,7 @@ class AiBuddyBot(ActivityHandler):
     Attributes:
         config: Application configuration object.
         groq_client: Async Groq client used to call the Llama 3 API.
-        conversation_history: Per-user chat history (user_id → message list).
+        conversation_history: Per-user chat history scoped to each conversation.
     """
 
     def __init__(self, config: Config) -> None:
@@ -52,13 +52,24 @@ class AiBuddyBot(ActivityHandler):
         super().__init__()
         self.config = config
         self.groq_client = AsyncGroq(api_key=config.GROQ_API_KEY)
-        # {user_id: [{"role": "user"/"assistant", "content": "..."}, ...]}
-        self.conversation_history: Dict[str, List[Dict[str, str]]] = {}
+        # {(tenant, channel, conversation, user_id): [{"role": "user"/"assistant", "content": "..."}, ...]}
+        self.conversation_history: Dict[Tuple[str, str, str, str], List[Dict[str, str]]] = {}
         logger.info("AiBuddyBot initialised with model: %s", config.GROQ_MODEL)
 
     # ------------------------------------------------------------------
     # Bot Framework lifecycle callbacks
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _history_key(turn_context: TurnContext, user_id: str) -> Tuple[str, str, str, str]:
+        """Return a privacy boundary for per-user conversation history."""
+        activity = turn_context.activity
+        conversation_id = getattr(activity.conversation, "id", "")
+        channel_id = activity.channel_id or ""
+        channel_data = activity.channel_data or {}
+        tenant = channel_data.get("tenant", {}) if isinstance(channel_data, dict) else {}
+        tenant_id = tenant.get("id", "") if isinstance(tenant, dict) else ""
+        return tenant_id, channel_id, conversation_id, user_id
 
     async def on_message_activity(self, turn_context: TurnContext) -> None:
         """Handle an incoming message from a Teams user.
@@ -71,6 +82,7 @@ class AiBuddyBot(ActivityHandler):
         """
         user_message: str = (turn_context.activity.text or "").strip()
         user_id: str = turn_context.activity.from_property.id
+        history_key = self._history_key(turn_context, user_id)
 
         if not user_message:
             await turn_context.send_activity(
@@ -90,7 +102,7 @@ class AiBuddyBot(ActivityHandler):
             return
 
         if command in ("clear", "reset"):
-            self.conversation_history.pop(user_id, None)
+            self.conversation_history.pop(history_key, None)
             await turn_context.send_activity(
                 MessageFactory.text(
                     "🗑️ Conversation history cleared! Starting fresh. How can I help you?"
@@ -103,7 +115,7 @@ class AiBuddyBot(ActivityHandler):
         await turn_context.send_activity(MessageFactory.text("🤔 Thinking..."))
 
         # Retrieve or create history for this user
-        history = self.conversation_history.setdefault(user_id, [])
+        history = self.conversation_history.setdefault(history_key, [])
 
         # Append the new user message
         history.append({"role": "user", "content": user_message})
@@ -111,7 +123,7 @@ class AiBuddyBot(ActivityHandler):
         # Keep only the last MAX_HISTORY messages to control token usage
         if len(history) > MAX_HISTORY:
             history = history[-MAX_HISTORY:]
-            self.conversation_history[user_id] = history
+            self.conversation_history[history_key] = history
 
         try:
             # Build the full message list: system prompt + history
@@ -130,6 +142,8 @@ class AiBuddyBot(ActivityHandler):
                 temperature=0.7,
             )
 
+            if not response.choices or not response.choices[0].message.content:
+                raise RuntimeError("Groq returned an empty response")
             ai_reply: str = response.choices[0].message.content
 
             # Append AI response to history
