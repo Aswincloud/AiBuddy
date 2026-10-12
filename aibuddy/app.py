@@ -111,7 +111,10 @@ async def messages(req: Request) -> Response:
     if "application/json" not in req.content_type:
         return Response(status=415, text="Unsupported Media Type: expected application/json")
 
-    body = await req.json()
+    try:
+        body = await req.json()
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return Response(status=400, text="Invalid JSON")
     activity = Activity().deserialize(body)
     auth_header: str = req.headers.get("Authorization", "")
 
