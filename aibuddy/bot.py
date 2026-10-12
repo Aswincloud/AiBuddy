@@ -142,6 +142,8 @@ class AiBuddyBot(ActivityHandler):
                 temperature=0.7,
             )
 
+            if not response.choices or not response.choices[0].message.content:
+                raise RuntimeError("Groq returned an empty response")
             ai_reply: str = response.choices[0].message.content
 
             # Append AI response to history
